@@ -15,8 +15,8 @@ groundgo
 dwouldha  
 vegivenu  
 sroots
-Ensure that rows◊columns>=L
-If multiple grids satisfy the above conditions, choose the one with the minimum area, i.e. rows◊columns.
+Ensure that rows√ócolumns>=L
+If multiple grids satisfy the above conditions, choose the one with the minimum area, i.e. rows√ócolumns.
 The encoded message is obtained by displaying the characters in a column, inserting a space, and then displaying the next column and inserting a space, and so on. For example, the encoded message for the above rectangle is:
 
 imtgdvs fearwer mayoogo anouuio ntnnlvt wttddes aohghn sseoau
