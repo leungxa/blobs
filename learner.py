@@ -107,7 +107,7 @@ class Learner:
         self.update_status(Status.WAITING_FOR_GRADE)
         if self.has_grade():
             # failing grade, work on next submission
-            if self.curr_sub.failing():
+            if self.last_sub.failing():
                 return self.start_submission(curr_tick)
             else:
                 self.update_status(Status.DONE)
@@ -156,7 +156,7 @@ class Submission:
     def get_available_sub_to_review(learner):
         for sub in GLOBAL_SUB_POOL:
             if (sub.author.id != learner.id) and \
-                    (learner.id not in sub.current_reviewer_ids) and \
+                    (learner.id not in [r.author.id for r in sub.reviews]) and \
                     (len(sub.reviews) + len(sub.current_reviewer_ids) < Submission.REQUIRED_REVIEW_NUM):
                 return sub
         return None
@@ -206,10 +206,10 @@ def simulate(ticks):
             
     print "GLOBAL_SUB~~~~~~~~~~"
     for sub in GLOBAL_SUB_POOL:
-        print sub.author.id, sub.has_grade(), [r.score for r in sub.reviews], sub.score_sum()
+        print sub.author.id, sub.has_grade(), [r.author.id for r in sub.reviews], sub.score_sum()
     print "GRADED_SUB~~~~~~~~~~"
     for sub in GRADED_SUBS:
-        print sub.author.id, sub.has_grade(), [r.score for r in sub.reviews], sub.score_sum()
+        print sub.author.id, sub.has_grade(), [r.author.id for r in sub.reviews], sub.score_sum()
     
     for l in learners:
         print l.subs
