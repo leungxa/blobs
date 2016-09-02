@@ -25,9 +25,6 @@ class Learner:
 
     def update_status(self, status):
         self.curr_status = status
-        print "learner", self.id, "new_status:", self.curr_status
-        if self.curr_status == Status.DONE and self.has_grade():
-            print self.last_sub.score_sum()
         
     def start_submission(self, curr_tick):
         if curr_tick != self.first_sub_start_time:
@@ -41,8 +38,10 @@ class Learner:
     
     def workon_or_submit_submission(self, curr_tick):
         # do nothing until time to submit
+        # submit - add to global submission pool and add to learner's submissions
         if self.working_on_sub and \
                 self.working_on_sub.sub_start_time + Submission.WORKING_TIME == curr_tick:
+            self.working_on_sub.submit_time = curr_tick
             GLOBAL_SUB_POOL.append(self.working_on_sub)
             self.subs.append(self.working_on_sub)
             self.last_sub = self.working_on_sub
@@ -97,10 +96,8 @@ class Learner:
             return self.wait_subs_to_review(curr_tick)
         # if learners submission does not have a grade, wait for a grade
         if not self.has_grade():
-            print "should go here"
             return self.wait_for_grade(curr_tick)
         # if ^ dont apply, learner is finished and stops doing anything
-        print "why is it going to done", self.has_grade()
         return self.update_status(Status.DONE)
     
     def wait_for_grade(self, curr_tick):
@@ -147,6 +144,7 @@ class Submission:
         self.author = author
         self.sequence_num = author.sub_count + 1
         self.sub_start_time = sub_start_time
+        self.submit_time = None
         self.sub_true_grade = true_grade
         self.grade_tick = -1
         self.reviews = []
@@ -186,32 +184,67 @@ class Review:
         self.score = score
         self.review_time = curr_tick
     
-def simulate(ticks):
+def simulate(ticks, learners):
     if ticks <= 0:
         return
-    
-    # create learners
-    learners = [
-        Learner(1, 1, 90, 2),
-        Learner(2, 2, 98, 3),
-        Learner(3, 2, 91, -1),
-        Learner(4, 5, 80, -2)
-    ]
     
     # tick learners
     for i in range(ticks):
         for l in learners:
             l.tick(i)
 
-            
-    print "GLOBAL_SUB~~~~~~~~~~"
-    for sub in GLOBAL_SUB_POOL:
-        print sub.author.id, sub.has_grade(), [r.author.id for r in sub.reviews], sub.score_sum()
-    print "GRADED_SUB~~~~~~~~~~"
-    for sub in GRADED_SUBS:
-        print sub.author.id, sub.has_grade(), [r.author.id for r in sub.reviews], sub.score_sum()
-    
-    for l in learners:
-        print l.subs
 
-simulate(1500)
+    # Output - 1 line for each submission
+    # 5 space-separated ints for each submission:
+    # learnerId, 0-indexed submission #, submission tick, scoresum, gradetick
+    for l in learners:
+        for i, s in enumerate(l.subs):
+            learnerId = l.id
+            sub_index = i
+            sub_tick = s.submit_time
+            score_sum = s.score_sum()
+            grade_tick = -1
+            if s.has_grade():
+                grade_tick = s.reviews[-1].review_time
+            print learnerId, sub_index, sub_tick, score_sum, grade_tick
+
+def process_input():
+    ticks = int(raw_input())
+    num_learners = int(raw_input())
+    learners = []
+    
+    # create learners
+    # learners = [
+    #     Learner(1, 1, 90, 2),
+    #     Learner(2, 2, 98, 3),
+    #     Learner(3, 2, 91, -1),
+    #     Learner(4, 5, 80, -2)
+    # ]
+    
+    for i in range(num_learners):
+        q = map(int, raw_input().strip().split(' '))
+        l = Learner(q[0], q[1], q[2], q[3])
+        learners.append(l)
+    return ticks, learners
+
+def main():
+    ticks, learners = process_input()
+    simulate(ticks, learners)
+        
+main()
+
+
+## TEST DATA ##
+
+# 100
+# 2
+# 0 0 90 0
+# 1 0 100 15
+
+# 165
+# 4
+# 0 10 50 0
+# 1 0 100 0
+# 2 0 100 0
+# 3 0 100 0
+
