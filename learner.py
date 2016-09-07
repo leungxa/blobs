@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 GLOBAL_SUB_POOL = []
 GRADED_SUBS = []
-REVIEWS = {}
 
 class Status:
     DO_NOTHING, WORKING_ON_SUBMISSION, WAITING_TO_REVIEW, WORKING_ON_REVIEW, \
@@ -25,9 +24,10 @@ class Learner:
 
     def update_status(self, status):
         self.curr_status = status
+        # print self.id, self.curr_status
         
     def start_submission(self, curr_tick):
-        if curr_tick != self.first_sub_start_time:
+        if curr_tick != self.first_sub_start_time and len(self.subs) == 0:
             return
         true_grade = min(Submission.MAX_SCORE, \
                          max(Submission.MIN_SCORE, \
@@ -35,6 +35,7 @@ class Learner:
         sub = Submission(self, curr_tick, true_grade)
         self.working_on_sub = sub
         self.update_status(Status.WORKING_ON_SUBMISSION)
+        print "{} starting sub, tick {}".format(self.id, curr_tick)
     
     def workon_or_submit_submission(self, curr_tick):
         # do nothing until time to submit
@@ -47,16 +48,20 @@ class Learner:
             self.last_sub = self.working_on_sub
             del self.working_on_sub
             self.sub_count += 1
+            print "{} submitting, tick {}".format(self.id, curr_tick)
             self.update_status(Status.WAITING_TO_REVIEW)
+            return self.wait_subs_to_review(curr_tick)
     
     def wait_subs_to_review(self, curr_tick):
     # waiting for submissions to review
         self.update_status(Status.WAITING_TO_REVIEW)
         # failing grade, work on next submission
         if self.last_sub.failing():
-            self.start_submission(curr_tick)
+            if self.id == 0:
+                print "failing! {}".format(curr_tick)
+            return self.start_submission(curr_tick)
         # if pool contains submissions they can review, start to review
-        sub_to_review = Submission.get_available_sub_to_review(self)
+        sub_to_review = Submission.get_available_sub_to_review(self, curr_tick)
         if sub_to_review:
             return self.start_review(curr_tick, sub_to_review)
         # if ^ dont apply, don't do anything
@@ -68,6 +73,7 @@ class Learner:
         # goes through submissions, find one to review
         self.reviewing_sub = submission
         submission.current_reviewer_ids.add(self.id)
+        print "{} starting to review for {}, tick {}".format(self.id, submission.author.id, curr_tick)
         self.review_start_time = curr_tick
         self.update_status(Status.WORKING_ON_REVIEW)
     
@@ -84,12 +90,16 @@ class Learner:
                 GRADED_SUBS.append(sub)
                 GLOBAL_SUB_POOL.remove(sub)
             self.review_count += 1
+            print "{} Finishing a review for {}, tick {}".format(self.id, sub.author.id, curr_tick)
             self.update_status(Status.FINISH_REVIEW)
+            return self.after_submitting_review(curr_tick)
     
     def after_submitting_review(self, curr_tick):
     # finishes a review
         # failing grade, work on next submission
         if self.last_sub.failing():
+            if self.id == 0:
+                print "failing! {}".format(curr_tick)
             return self.start_submission(curr_tick)
         # user submit fewer reviews than 3x theirsumbmissioncount, wait for subs to review
         if self.review_count < 3 * self.sub_count:
@@ -103,11 +113,12 @@ class Learner:
     def wait_for_grade(self, curr_tick):
         self.update_status(Status.WAITING_FOR_GRADE)
         if self.has_grade():
+            print "{} got grade {}".format(self.id, self.last_sub.score_sum())
             # failing grade, work on next submission
             if self.last_sub.failing():
                 return self.start_submission(curr_tick)
             else:
-                self.update_status(Status.DONE)
+                return self.update_status(Status.DONE)
     
     def tick(self, curr_tick):
         if self.curr_status == Status.DONE:
@@ -151,11 +162,12 @@ class Submission:
         self.current_reviewer_ids = set()
 
     @staticmethod
-    def get_available_sub_to_review(learner):
+    def get_available_sub_to_review(learner, curr_tick):
         for sub in GLOBAL_SUB_POOL:
             if (sub.author.id != learner.id) and \
                     (learner.id not in [r.author.id for r in sub.reviews]) and \
-                    (len(sub.reviews) + len(sub.current_reviewer_ids) < Submission.REQUIRED_REVIEW_NUM):
+                    (len(sub.reviews) + len(sub.current_reviewer_ids) < Submission.REQUIRED_REVIEW_NUM) and \
+                    curr_tick > sub.submit_time:
                 return sub
         return None
         
@@ -172,17 +184,21 @@ class Submission:
     
     def failing(self):
         score = self.score_sum()
-        if (len(self.reviews) == 3 and score < self.PASSING_SCORE) or \
-                (len(self.reviews) == 2 and score < self.PASSING_SCORE - 100) or \
-                (len(self.reviews) == 1 and score < self.PASSING_SCORE - 200):
+        # if (len(self.reviews) == 3 and score < self.PASSING_SCORE) or \
+        #         (len(self.reviews) == 2 and score < self.PASSING_SCORE - 100) or \
+        #         (len(self.reviews) == 1 and score < self.PASSING_SCORE - 200):
+        #     return True
+        if len(self.reviews) == 3 and score < self.PASSING_SCORE:
             return True
         return False
 
+    
 class Review:
     def __init__(self, author, score, curr_tick):
         self.author = author
         self.score = score
         self.review_time = curr_tick
+    
     
 def simulate(ticks, learners):
     if ticks <= 0:
@@ -192,8 +208,7 @@ def simulate(ticks, learners):
     for i in range(ticks):
         for l in learners:
             l.tick(i)
-
-
+            
     # Output - 1 line for each submission
     # 5 space-separated ints for each submission:
     # learnerId, 0-indexed submission #, submission tick, scoresum, gradetick
@@ -207,6 +222,16 @@ def simulate(ticks, learners):
             if s.has_grade():
                 grade_tick = s.reviews[-1].review_time
             print learnerId, sub_index, sub_tick, score_sum, grade_tick
+    # Print        
+    # GLOBAL_SUB_POOL = []
+    # GRADED_SUBS = []
+    # REVIEWS = {}
+    # print "GLOBAL_SUB_POOL==============="
+    # for sub in GLOBAL_SUB_POOL:
+    #     print sub.author.id, sub.score_sum(), [r.author.id for r in sub.reviews], [s for s in sub.current_reviewer_ids]
+    # print "GRADED_SUBS==============="
+    # for sub in GRADED_SUBS:
+    #     print sub.author.id, sub.score_sum(), [r.author.id for r in sub.reviews], [s for s in sub.current_reviewer_ids]
 
 def process_input():
     ticks = int(raw_input())
@@ -230,16 +255,65 @@ def process_input():
 def main():
     ticks, learners = process_input()
     simulate(ticks, learners)
-        
-main()
 
+def test():
+    # ticks = 200
+    # learners = [
+    #     Learner(0, 0, 80, 0),
+    #     Learner(1, 0, 100, -5),
+    #     Learner(2, 0, 100, -5),
+    #     Learner(3, 0, 100, -5),
+    #     Learner(4, 50, 100, -5),
+    # ]
+    ticks = 462
+    learners = [
+        Learner(0, 0, 1, 0),
+        Learner(1, 0, 100, 0),
+        Learner(2, 0, 100, 0),
+        Learner(3, 0, 100, 0),
+        Learner(4, 0, 100, 0),
+        Learner(5, 200, 100, 0),
+        Learner(6, 200, 100, 0),
+        Learner(7, 200, 100, 0),
+        Learner(8, 200, 100, 0),
+        Learner(9, 250, 100, 0),
+        Learner(10, 250, 100, 0),
+        Learner(11, 300, 100, 0),
+    ]
+    simulate(ticks, learners)
+    
+#main()
+test()
 
 ## TEST DATA ##
 
-# 100
-# 2
-# 0 0 90 0
-# 1 0 100 15
+# 200
+# 5
+# 0 0 80 0
+# 1 0 100 -5
+# 2 0 100 -5
+# 3 0 100 -5
+# 4 50 100 -5
+
+
+# 461
+# 12
+# 0 0 1 0
+# 1 0 100 0
+# 2 0 100 0
+# 3 0 100 0
+# 4 0 100 0
+# 5 200 100 0
+# 6 200 100 0
+# 7 200 100 0
+# 8 200 100 0
+# 9 250 100 0
+# 10 250 100 0
+# 11 300 100 0
+
+
+
+
 
 # 165
 # 4
