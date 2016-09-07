@@ -2,7 +2,8 @@ from collections import OrderedDict
 
 GLOBAL_SUB_POOL = []
 GRADED_SUBS = []
-DEBUG = True
+WAITING_QUEUE = []
+DEBUG = False
 
 class Status:
     DO_NOTHING, WORKING_ON_SUBMISSION, WAITING_TO_REVIEW, WORKING_ON_REVIEW, \
@@ -26,6 +27,14 @@ class Learner:
     def update_status(self, status):
         self.curr_status = status
         # print self.id, self.curr_status
+
+    def add_to_waiting_queue(self, curr_tick):
+        if self not in WAITING_QUEUE:
+            WAITING_QUEUE.append(self)
+            if DEBUG:
+                print "{} added to WAITING_QUEUE {}, tick {}".format(self.id, [x.id for x in WAITING_QUEUE], curr_tick)
+        else:
+            print "{} ALREADY IN WAITING QUEUE!".format(self.id)
         
     def start_submission(self, curr_tick):
         if curr_tick != self.first_sub_start_time and len(self.subs) == 0:
@@ -53,16 +62,13 @@ class Learner:
             if DEBUG:
                 print "{} submitting, tick {}".format(self.id, curr_tick)
             self.update_status(Status.WAITING_TO_REVIEW)
-            return self.wait_subs_to_review(curr_tick)
+            return self.add_to_waiting_queue(curr_tick)
     
     def wait_subs_to_review(self, curr_tick):
     # waiting for submissions to review
         self.update_status(Status.WAITING_TO_REVIEW)
         # failing grade, work on next submission
         if self.last_sub.failing():
-            if DEBUG:
-                if self.id == 0:
-                    print "failing! {}".format(curr_tick)
             return self.start_submission(curr_tick)
         # if pool contains submissions they can review, start to review
         sub_to_review = Submission.get_available_sub_to_review(self, curr_tick)
@@ -98,15 +104,13 @@ class Learner:
             if DEBUG:
                 print "{} Finishing a review for {}, tick {}".format(self.id, sub.author.id, curr_tick)
             self.update_status(Status.FINISH_REVIEW)
-            return self.after_submitting_review(curr_tick)
+            return self.add_to_waiting_queue(curr_tick)
+            # return self.after_submitting_review(curr_tick)
     
     def after_submitting_review(self, curr_tick):
     # finishes a review
         # failing grade, work on next submission
         if self.last_sub.failing():
-            if DEBUG:
-                if self.id == 0:
-                    print "failing! {}".format(curr_tick)
             return self.start_submission(curr_tick)
         # user submit fewer reviews than 3x theirsumbmissioncount, wait for subs to review
         if self.review_count < 3 * self.sub_count:
@@ -192,10 +196,6 @@ class Submission:
     
     def failing(self):
         score = self.score_sum()
-        # if (len(self.reviews) == 3 and score < self.PASSING_SCORE) or \
-        #         (len(self.reviews) == 2 and score < self.PASSING_SCORE - 100) or \
-        #         (len(self.reviews) == 1 and score < self.PASSING_SCORE - 200):
-        #     return True
         if len(self.reviews) == 3 and score < self.PASSING_SCORE:
             return True
         return False
@@ -212,11 +212,23 @@ def simulate(ticks, learners):
     if ticks <= 0:
         return
     
+    waiting_statuses = [
+        Status.WAITING_TO_REVIEW,
+        Status.WAITING_FOR_GRADE,
+    ]
+    
     # tick learners
+    global WAITING_QUEUE
     for i in range(ticks):
         for l in learners:
+            if l.curr_status in waiting_statuses:
+                l.add_to_waiting_queue(i)
+            else:
+                l.tick(i)
+        for l in WAITING_QUEUE:
             l.tick(i)
-            
+        WAITING_QUEUE = []
+        
     # Output - 1 line for each submission
     # 5 space-separated ints for each submission:
     # learnerId, 0-indexed submission #, submission tick, scoresum, gradetick
@@ -230,16 +242,6 @@ def simulate(ticks, learners):
             if s.has_grade():
                 grade_tick = s.reviews[-1].review_time
             print learnerId, sub_index, sub_tick, score_sum, grade_tick
-    # Print        
-    # GLOBAL_SUB_POOL = []
-    # GRADED_SUBS = []
-    # REVIEWS = {}
-    # print "GLOBAL_SUB_POOL==============="
-    # for sub in GLOBAL_SUB_POOL:
-    #     print sub.author.id, sub.score_sum(), [r.author.id for r in sub.reviews], [s for s in sub.current_reviewer_ids]
-    # print "GRADED_SUBS==============="
-    # for sub in GRADED_SUBS:
-    #     print sub.author.id, sub.score_sum(), [r.author.id for r in sub.reviews], [s for s in sub.current_reviewer_ids]
 
 def process_input():
     ticks = int(raw_input())
@@ -265,68 +267,30 @@ def main():
     simulate(ticks, learners)
 
 def test():
-    # ticks = 200
-    # learners = [
-    #     Learner(0, 0, 80, 0),
-    #     Learner(1, 0, 100, -5),
-    #     Learner(2, 0, 100, -5),
-    #     Learner(3, 0, 100, -5),
-    #     Learner(4, 50, 100, -5),
-    # ]
-    ticks = 462
+    ticks = 200
     learners = [
-        Learner(0, 0, 1, 0),
-        Learner(1, 0, 100, 0),
-        Learner(2, 0, 100, 0),
-        Learner(3, 0, 100, 0),
-        Learner(4, 0, 100, 0),
-        Learner(5, 200, 100, 0),
-        Learner(6, 200, 100, 0),
-        Learner(7, 200, 100, 0),
-        Learner(8, 200, 100, 0),
-        Learner(9, 250, 100, 0),
-        Learner(10, 250, 100, 0),
-        Learner(11, 300, 100, 0),
+        Learner(0, 0, 80, 0),
+        Learner(1, 0, 100, -5),
+        Learner(2, 0, 100, -5),
+        Learner(3, 0, 100, -5),
+        Learner(4, 50, 100, -5),
     ]
+    # ticks = 462
+    # learners = [
+    #     Learner(0, 0, 1, 0),
+    #     Learner(1, 0, 100, 0),
+    #     Learner(2, 0, 100, 0),
+    #     Learner(3, 0, 100, 0),
+    #     Learner(4, 0, 100, 0),
+    #     Learner(5, 200, 100, 0),
+    #     Learner(6, 200, 100, 0),
+    #     Learner(7, 200, 100, 0),
+    #     Learner(8, 200, 100, 0),
+    #     Learner(9, 250, 100, 0),
+    #     Learner(10, 250, 100, 0),
+    #     Learner(11, 300, 100, 0),
+    # ]
     simulate(ticks, learners)
     
-#main()
-test()
-
-## TEST DATA ##
-
-# 200
-# 5
-# 0 0 80 0
-# 1 0 100 -5
-# 2 0 100 -5
-# 3 0 100 -5
-# 4 50 100 -5
-
-
-# 461
-# 12
-# 0 0 1 0
-# 1 0 100 0
-# 2 0 100 0
-# 3 0 100 0
-# 4 0 100 0
-# 5 200 100 0
-# 6 200 100 0
-# 7 200 100 0
-# 8 200 100 0
-# 9 250 100 0
-# 10 250 100 0
-# 11 300 100 0
-
-
-
-
-
-# 165
-# 4
-# 0 10 50 0
-# 1 0 100 0
-# 2 0 100 0
-# 3 0 100 0
-
+#test()
+main()
