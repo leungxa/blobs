@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 GLOBAL_SUB_POOL = []
 GRADED_SUBS = []
+DEBUG = True
 
 class Status:
     DO_NOTHING, WORKING_ON_SUBMISSION, WAITING_TO_REVIEW, WORKING_ON_REVIEW, \
@@ -35,7 +36,8 @@ class Learner:
         sub = Submission(self, curr_tick, true_grade)
         self.working_on_sub = sub
         self.update_status(Status.WORKING_ON_SUBMISSION)
-        print "{} starting sub, tick {}".format(self.id, curr_tick)
+        if DEBUG:
+            print "{} starting sub, tick {}".format(self.id, curr_tick)
     
     def workon_or_submit_submission(self, curr_tick):
         # do nothing until time to submit
@@ -48,7 +50,8 @@ class Learner:
             self.last_sub = self.working_on_sub
             del self.working_on_sub
             self.sub_count += 1
-            print "{} submitting, tick {}".format(self.id, curr_tick)
+            if DEBUG:
+                print "{} submitting, tick {}".format(self.id, curr_tick)
             self.update_status(Status.WAITING_TO_REVIEW)
             return self.wait_subs_to_review(curr_tick)
     
@@ -57,8 +60,9 @@ class Learner:
         self.update_status(Status.WAITING_TO_REVIEW)
         # failing grade, work on next submission
         if self.last_sub.failing():
-            if self.id == 0:
-                print "failing! {}".format(curr_tick)
+            if DEBUG:
+                if self.id == 0:
+                    print "failing! {}".format(curr_tick)
             return self.start_submission(curr_tick)
         # if pool contains submissions they can review, start to review
         sub_to_review = Submission.get_available_sub_to_review(self, curr_tick)
@@ -73,7 +77,8 @@ class Learner:
         # goes through submissions, find one to review
         self.reviewing_sub = submission
         submission.current_reviewer_ids.add(self.id)
-        print "{} starting to review for {}, tick {}".format(self.id, submission.author.id, curr_tick)
+        if DEBUG:
+            print "{} starting to review for {}, tick {}".format(self.id, submission.author.id, curr_tick)
         self.review_start_time = curr_tick
         self.update_status(Status.WORKING_ON_REVIEW)
     
@@ -90,7 +95,8 @@ class Learner:
                 GRADED_SUBS.append(sub)
                 GLOBAL_SUB_POOL.remove(sub)
             self.review_count += 1
-            print "{} Finishing a review for {}, tick {}".format(self.id, sub.author.id, curr_tick)
+            if DEBUG:
+                print "{} Finishing a review for {}, tick {}".format(self.id, sub.author.id, curr_tick)
             self.update_status(Status.FINISH_REVIEW)
             return self.after_submitting_review(curr_tick)
     
@@ -98,8 +104,9 @@ class Learner:
     # finishes a review
         # failing grade, work on next submission
         if self.last_sub.failing():
-            if self.id == 0:
-                print "failing! {}".format(curr_tick)
+            if DEBUG:
+                if self.id == 0:
+                    print "failing! {}".format(curr_tick)
             return self.start_submission(curr_tick)
         # user submit fewer reviews than 3x theirsumbmissioncount, wait for subs to review
         if self.review_count < 3 * self.sub_count:
@@ -113,7 +120,8 @@ class Learner:
     def wait_for_grade(self, curr_tick):
         self.update_status(Status.WAITING_FOR_GRADE)
         if self.has_grade():
-            print "{} got grade {}".format(self.id, self.last_sub.score_sum())
+            if DEBUG:
+                print "{} got grade {}".format(self.id, self.last_sub.score_sum())
             # failing grade, work on next submission
             if self.last_sub.failing():
                 return self.start_submission(curr_tick)
