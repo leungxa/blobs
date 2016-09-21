@@ -18,7 +18,7 @@
 
 # { 1: 4, 2: 5, 3: 6}
 
-def tick(cd_items, ticks):
+def tick(cd_items, ticks=1):
     for j, cd in cd_items:
         new_cd = cd - ticks
         if new_cd =< 0:
