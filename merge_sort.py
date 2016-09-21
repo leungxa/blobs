@@ -15,26 +15,24 @@ def _merge(l1, l2):
         return l2
     if not l2:
         return l1
-    if len(l1) == 1 and len(l2) == 1:
-        return [min(l1[0],l2[0]), max(l1[0],l2[0])]
-    else:
-        total = []
-        i = 0
-        j = 0
-        while i < len(l1) and j < len(l2):
-            if l1[i] <= l2[j]:
-                total.append(l1[i])
-                i += 1
-            else:
-                total.append(l2[j])
-                j += 1
-        while i < len(l1):
+    
+    total = []
+    i = 0
+    j = 0
+    while i < len(l1) and j < len(l2):
+        if l1[i] <= l2[j]:
             total.append(l1[i])
             i += 1
-        while j < len(l2):
+        else:
             total.append(l2[j])
             j += 1
-        return total
+    while i < len(l1):
+        total.append(l1[i])
+        i += 1
+    while j < len(l2):
+        total.append(l2[j])
+        j += 1
+    return total
             
 # a = [1,3,4,10,11]
 # b = [4]
