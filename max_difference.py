@@ -12,13 +12,9 @@ def maxDifference(a):
                 v_min = num
                 v_max = None
             else:
-                if num >= v_min:
-                    if v_max is None:
-                        v_max = num
-                    elif num >= v_max:
-                        v_max = num
-                    if v_max - v_min > max_diff:
-                        max_diff = v_max - v_min
+                v_max = max(v_max, num)
+                if v_max - v_min > max_diff:
+                    max_diff = v_max - v_min
     
     return max_diff
 
