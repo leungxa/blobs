@@ -1,3 +1,4 @@
+
 def maxDifference(a):
     if len(a) == 1:
         return 0
@@ -7,8 +8,6 @@ def maxDifference(a):
     for i, num in enumerate(a):
         if i > 0:
             if num < v_min:
-                if v_max and v_max - v_min > max_diff:
-                    max_diff = v_max - v_min
                 v_min = num
                 v_max = None
             else:
