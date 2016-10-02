@@ -1,6 +1,3 @@
-# Implement 'bisect' functionality of revision control
-# Find last working commit, given a good and a bad
-
 FIRST_FAIL = 672
 
 def test(x):
@@ -18,4 +15,17 @@ def bisect(good, bad):
         else:
             bad = half
 
-print bisect(17, 7000)
+
+def r_bisect(good, bad):
+    half = (good + bad) / 2
+    passing = test(half)
+    is_target = passing and not test(half + 1)
+    if is_target:
+        return half
+    if passing:
+        return bisect(half, bad)
+    else:
+        return bisect(good, half)
+
+
+print bisect(17, 700) == r_bisect(17, 700)
