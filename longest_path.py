@@ -15,14 +15,11 @@ def longest_path(root):
         cur_node = queue.popleft()
         if len(cur_node.path) > len(longest_path):
             longest_path = cur_node.path
-        if cur_node.left:
-            path = cur_node.path + [cur_node.left]
-            cur_node.left.path = path
-            queue.append(cur_node.left)
-        if cur_node.right:
-            path = cur_node.path + [cur_node.right]
-            cur_node.right.path = path
-            queue.append(cur_node.right)
+        for child in [cur_node.left, cur_node.right]:
+            if child:
+                path = cur_node.path + [child]
+                child.path = path
+                queue.append(child)
     return longest_path
     
 a = Node('a')
