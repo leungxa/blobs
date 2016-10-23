@@ -19,16 +19,19 @@ def is_valid_phrase(words, dictionary):
     return True
 
 def word_separation(word, dictionary):
+    if word in dictionary:
+        return word
     root = Phrase([word[0]], word[1:])
     queue = deque([root])
-    
+
     while len(queue):
         phrase = queue.pop()
         valid = is_valid_phrase(phrase.words, dictionary)
         if phrase.rest:
             next_letter = phrase.rest[0]
             new_words = []
-            new_words.append(phrase.words + [next_letter])
+            if valid:
+                new_words.append(phrase.words + [next_letter])
             new_words.append(phrase.words[:-1] + [phrase.words[-1] + next_letter])
             for new_word in new_words:
                 new_phrase = Phrase(new_word, phrase.rest[1:])
