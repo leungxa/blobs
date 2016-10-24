@@ -7,6 +7,22 @@
 
 from collections import deque
 
+import time
+
+def timeit(f):
+    def timed(*args, **kw):
+
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+
+        print 'func:%r args:[] took: %2.4f sec' % \
+          (f.__name__, te-ts)
+        return result
+
+    return timed
+
+
 class Phrase:
     def __init__(self, words, rest):
         self.words = words
@@ -39,10 +55,65 @@ def word_separation(word, dictionary):
         elif not phrase.rest and valid:
             return ' '.join(phrase.words)
     return None
+
+
+memoize = {}
+def word_separation_dp(word, dictionary):
+    if word in dictionary:
+        return word
+    
+    if word in memoize:
+        return memoize[word]
+    
+    for i in range(len(word)):
+        prefix = word[0:i]
+        suffix = word[i:len(word)]
         
-print word_separation('i', ['i', 'like'])
-print word_separation('il', ['i', 'like', 'apples'])
-print word_separation('ilike', ['i', 'like', 'apples'])
-print word_separation('ilikeapp', ['i', 'like', 'apples'])
-print word_separation('ilikeants', ['i', 'like', 'an', 'ants'])
-print word_separation('iloveanimals', ['i', 'like', 'love', 'an', 'animal', 'animals'])
+        if prefix in dictionary:
+            split_suff = word_separation_dp(suffix, dictionary)
+            if split_suff:
+                memoize[word] = prefix + ' ' + split_suff
+                return prefix + ' ' + split_suff
+        
+    return None
+
+def word_separation_r(word, dictionary):
+    if word in dictionary:
+        return word
+    
+    for i in range(len(word)):
+        prefix = word[0:i]
+        suffix = word[i:len(word)]
+        
+        if prefix in dictionary:
+            split_suff = word_separation_dp(suffix, dictionary)
+            if split_suff:
+                return prefix + ' ' + split_suff
+        
+    return None
+
+
+
+# Testing
+
+timed_word_sep_dp = timeit(word_separation_dp)
+print timed_word_sep_dp('i', ['i', 'like'])
+print timed_word_sep_dp('ilike', ['i', 'like', 'apples'])
+print timed_word_sep_dp('iloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimals', ['i', 'like', 'love', 'an', 'animal', 'animals'])
+
+
+timed_word_sep_r = timeit(word_separation_r)
+print timed_word_sep_r('iloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimals', ['i', 'like', 'love', 'an', 'animal', 'animals'])
+    
+    
+timed_word_sep = timeit(word_separation)
+print timed_word_sep('iloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeloveloveloveanimalsanimalsloveilikeiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimalsiloveanimals', ['i', 'like', 'love', 'an', 'animal', 'animals'])
+    
+    
+# print word_separation('i', ['i', 'like'])
+# print word_separation('il', ['i', 'like', 'apples'])
+# print word_separation('ilike', ['i', 'like', 'apples'])
+# print word_separation('ilikiiiieb', ['i', 'l', 'k', 'e'])
+# print word_separation('ilikeapp', ['i', 'like', 'apples'])
+# print word_separation('ilikeants', ['i', 'like', 'an', 'ants'])
+# print word_separation('iloveanimals', ['i', 'like', 'love', 'an', 'animal', 'animals'])
