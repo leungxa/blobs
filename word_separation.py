@@ -86,7 +86,7 @@ def word_separation_r(word, dictionary):
         suffix = word[i:len(word)]
         
         if prefix in dictionary:
-            split_suff = word_separation_dp(suffix, dictionary)
+            split_suff = word_separation_r(suffix, dictionary)
             if split_suff:
                 return prefix + ' ' + split_suff
         
