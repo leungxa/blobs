@@ -4,6 +4,7 @@ class Player:
     ATTACK_ALREADY_TAKEN = 2
     ATTACK_SUNK = 3
     ATTACK_WIN = 4
+    
     def __init__(self, name, rows, cols):
         self.name = name
         self.board = Board(rows, cols)
@@ -14,29 +15,36 @@ class Player:
     
     def place_ships(self, ship_coords):
         self.board.place_ships(ship_coords)
+        self.alive_ship_count = len(ship_coords)
     
     def attack_player(self, coord, player):
-        value = player.board.board[coord[1]][coord[0]]
+        row, col = coord[1], coord[0]
+        # result = player.attack_at_coord(0, 0)
+        value = player.board.get_value_at_coord(row, col)
     
         if value == Board.EMPTY_SLOT:
-            player.board.board[coord[1]][coord[0]] = Board.ATTACK_MISS
+            player.board.set_value_at_coord(row, col, Board.ATTACK_MISS)
             return Player.ATTACK_MISS
         
         if value == Board.SHIP_SLOT:
-            player.board.board[coord[1]][coord[0]] = Board.ATTACK_HIT
+            player.board.set_value_at_coord(row, col, Board.ATTACK_HIT)
             
             # set that ship has been hit
             ship = self.board.get_ship_from_coord(coord)
             ship.set_hit(coord)
             if ship.is_sunk():
-                # check all other ships
-                all_sunk = True
-                for ship in self.board.ships:
-                    if not ship.is_sunk():
-                        all_sunk = False
-                        break
-                if all_sunk:
+                player.alive_ship_count -= 1
+                if player.alive_ship_count == 0:
                     return Player.ATTACK_WIN
+                
+                # # check all other ships
+                # all_sunk = True
+                # for ship in self.board.ships:
+                #     if not ship.is_sunk():
+                #         all_sunk = False
+                #         break
+                # if all_sunk:
+                #     return Player.ATTACK_WIN
                 return Player.ATTACK_SUNK
 
             return Player.ATTACK_HIT
@@ -92,6 +100,12 @@ class Board:
         for row in self.board:
             print row
     
+    def get_value_at_coord(self, row, col):
+        return self.board[row][col]
+
+    def set_value_at_coord(self, row, col, value):
+        self.board[row][col] = value
+    
     def place_ships(self, ships_coords):
         for ship_coords in ships_coords:
             s = Ship(ship_coords)
@@ -146,6 +160,30 @@ def main(b_rows, b_cols, p1_ships, p2_ships):
                 return
     return    
 
-main(10, 10, ships, ships)
+# main(10, 10, ships, ships)
                 
+def mock_attack():
+    ships = [[(0,1), (0,2)], [(1,3), (2,3), (3,3)]]
+    p1 = Player('Player1', 10, 10)
+    p1.place_ships(ships)
     
+    p2 = Player('Player2', 10, 10)
+    p2.place_ships(ships)
+    
+    result = p1.attack_player((0,1), p2)
+    assert(result == Player.ATTACK_HIT)
+    result = p1.attack_player((0,1), p2)
+    assert(result == Player.ATTACK_ALREADY_TAKEN)
+    result = p1.attack_player((0,0), p2)
+    assert(result == Player.ATTACK_MISS)
+    result = p1.attack_player((0,0), p2)
+    assert(result == Player.ATTACK_ALREADY_TAKEN)
+    result = p1.attack_player((0,2), p2)
+    assert(result == Player.ATTACK_SUNK)
+    
+    for coord in [(1,3), (2,3)]:
+        result = p1.attack_player(coord, p2)
+        assert(result == Player.ATTACK_HIT)
+    result = p1.attack_player((3,3), p2)
+    assert(result == Player.ATTACK_WIN)
+mock_attack()
