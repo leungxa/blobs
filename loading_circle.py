@@ -80,20 +80,22 @@ def get_point_color(percent, X, Y):
 
   dist = get_dist_from_origin_in_float(X, Y)
   if dist <= RADIUS:
-  coord_quad = get_coord_quad(X, Y)
-  angle_quad = percent / 25
-  if coord_quad < angle_quad:
-    return FILL_BLACK
-  elif coord_quad > angle_quad:
-    return FILL_WHITE
-  elif percent % 25 == 0 and coord_quad == angle_quad:
-    return FILL_BLACK
+    coord_quad = get_coord_quad(X, Y)
+    angle_quad = percent / 25
+    if coord_quad < angle_quad:
+      return FILL_BLACK
+    elif coord_quad > angle_quad:
+      return FILL_WHITE
+    elif percent % 25 == 0 and coord_quad == angle_quad:
+      return FILL_BLACK
+    else:
+      deg_angle = percent % 25 * 3.6
+      rad_angle = math.radians(degree)
+      if angle_quad == 1:
+        x = RADIUS * math.sin(rad_angle)
+        y = RADIUS * math.cos(rad_angle)
   else:
-    deg_angle = percent % 25 * 3.6
-    rad_angle = math.radians(degree)
-    if angle_quad == 1:
-      x = RADIUS * math.sin(rad_angle)
-      y = RADIUS * math.cos(rad_angle)
+    return FILL_WHITE
       
       
 print get_point_color(100, 100, 100)
