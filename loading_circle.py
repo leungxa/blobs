@@ -144,4 +144,14 @@ def test_get_point_color():
   
 test_get_point_color()
 
-
+def handle_input():
+  i = raw_input()
+  count = 1
+  for x in range(int(i)):
+    case = raw_input()
+    case = [int(c) for c in case.split(' ')]
+    color = get_point_color(case[0], case[1], case[2])
+    print 'Case #{}: {}'.format(count, color)
+    count += 1
+    
+handle_input()
