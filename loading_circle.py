@@ -17,17 +17,18 @@ def get_percent_quad(percent):
   count = 25
   quad = 1
   while (count <= 100):
-    if percent <= count:
+    if percent < count:
       return quad
     else:
       count += 25
       quad += 1
+  return 4
 
 def test_get_percent_quad():
   assert get_percent_quad(0) == 1
   assert get_percent_quad(15) == 1
-  assert get_percent_quad(25) == 1
-  assert get_percent_quad(50) == 2
+  assert get_percent_quad(25) == 2
+  assert get_percent_quad(50) == 3
   assert get_percent_quad(51) == 3
   assert get_percent_quad(66) == 3
   assert get_percent_quad(100) == 4
@@ -36,6 +37,36 @@ test_get_percent_quad()
 
 def get_dist_from_origin_in_float(X, Y):
   return math.sqrt( (X - ORIGIN)**2 + (Y - ORIGIN)**2 )
+
+print get_percent_quad(25)
+
+def get_circle_coord(percent):
+  angle_quad = get_percent_quad(percent)
+  deg_angle = percent % 25 * 3.6
+  rad_angle = math.radians(deg_angle)
+  
+  x_d = RADIUS * math.sin(rad_angle)
+  y_d = RADIUS * math.cos(rad_angle)
+
+  if angle_quad == 2:
+    x_d, y_d = y_d, x_d
+  if angle_quad == 3:
+    x_d, y_d = -x_d, -y_d
+  if angle_quad == 4:
+    x_d, y_d = -y_d, x_d
+    
+  x_coord = ORIGIN + x_d
+  y_coord = ORIGIN + y_d
+  return (int(x_coord), int(y_coord))
+  
+def test_get_circle_coord():
+  assert(get_circle_coord(0) == (50, 100))
+  assert(get_circle_coord(10) == (79, 90))
+  assert(get_circle_coord(25) == (100, 50))
+  assert(get_circle_coord(60) == (20, 9))
+  assert(get_circle_coord(99) == (46, 99))
+
+test_get_circle_coord()
 
 def get_point_color(percent, X, Y):
   if percent == 0:
@@ -46,10 +77,11 @@ def get_point_color(percent, X, Y):
   if dist <= RADIUS:
     if percent == 100:
       return FILL_BLACK
-  
+
     else:
       coord_quad = get_coord_quad(X, Y)
       angle_quad = get_percent_quad(percent)
+  
       if coord_quad < angle_quad:
         return FILL_BLACK
       elif coord_quad > angle_quad:
@@ -57,18 +89,9 @@ def get_point_color(percent, X, Y):
       elif percent % 25 == 0 and coord_quad == angle_quad:
         return FILL_BLACK
       else:
-        deg_angle = percent % 25 * 3.6
-        rad_angle = math.radians(deg_angle)
-        if angle_quad in [1, 3]:
-          x_d = RADIUS * math.sin(rad_angle)
-          y_d = RADIUS * math.cos(rad_angle)
-          if angle_quad == 3:
-            x_d, y_d = -x_d, -y_d
-        if angle_quad in [2, 4]:
-          x_d = RADIUS * math.cos(rad_angle)
-          y_d = RADIUS * math.sin(rad_angle)
-          if angle_quad == 4:
-            pass
+        # get_circle_coord(percent)
+        pass
+        #print percent, x_coord, y_coord
   else:
     return FILL_WHITE
       
