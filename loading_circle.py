@@ -38,7 +38,7 @@ test_get_percent_quad()
 def get_dist_from_origin_in_float(X, Y):
   return math.sqrt( (X - ORIGIN)**2 + (Y - ORIGIN)**2 )
 
-print get_percent_quad(25)
+# print get_percent_quad(25)
 
 # def get_circle_coord(percent):
 #   angle_quad = get_percent_quad(percent)
@@ -120,6 +120,7 @@ def get_point_color(percent, X, Y):
       else:
         percent_angle = percent_to_degrees(percent)
         coord_angle = coord_to_angle(X, Y)
+        print percent_angle, coord_angle
         filled = percent_angle > coord_angle
         return FILL_BLACK if filled else FILL_WHITE
   else:
@@ -136,22 +137,30 @@ def test_get_point_color():
   #   (99, 99, 99),
   #   (87, 20, 40)]
     
-  assert(get_point_color(0, 55, 55) == FILL_WHITE)
-  assert(get_point_color(12, 55, 55) == FILL_WHITE)
-  assert(get_point_color(13, 55, 55) == FILL_BLACK)
-  assert(get_point_color(99, 99, 99) == FILL_WHITE)
-  assert(get_point_color(87, 20, 40) == FILL_BLACK)
+  # assert(get_point_color(0, 55, 55) == FILL_WHITE)
+  # assert(get_point_color(12, 55, 55) == FILL_WHITE)
+  # assert(get_point_color(13, 55, 55) == FILL_BLACK)
+  # assert(get_point_color(99, 99, 99) == FILL_WHITE)
+  # assert(get_point_color(87, 20, 40) == FILL_BLACK)
+  
+  
+  print get_point_color(20, 46, 39)
+  print get_point_color(69, 44, 38)
+  print get_point_color(3, 82, 67)
+  print get_point_color(54, 8, 62)
+
+  
   
 test_get_point_color()
 
-def handle_input():
-  i = raw_input()
-  count = 1
-  for x in range(int(i)):
-    case = raw_input()
-    case = [int(c) for c in case.split(' ')]
-    color = get_point_color(case[0], case[1], case[2])
-    print 'Case #{}: {}'.format(count, color)
-    count += 1
+# def handle_input():
+#   i = raw_input()
+#   count = 1
+#   for x in range(int(i)):
+#     case = raw_input()
+#     case = [int(c) for c in case.split(' ')]
+#     color = get_point_color(case[0], case[1], case[2])
+#     print 'Case #{}: {}'.format(count, color)
+#     count += 1
     
-handle_input()
+# handle_input()
