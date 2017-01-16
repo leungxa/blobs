@@ -13,6 +13,27 @@ def get_coord_quad(X, Y):
     coord_quad = 4 if Y > ORIGIN else 3
   return coord_quad
 
+def get_percent_quad(percent):
+  count = 25
+  quad = 1
+  while (count <= 100):
+    if percent <= count:
+      return quad
+    else:
+      count += 25
+      quad += 1
+
+def test_get_percent_quad():
+  assert get_percent_quad(0) == 1
+  assert get_percent_quad(15) == 1
+  assert get_percent_quad(25) == 1
+  assert get_percent_quad(50) == 2
+  assert get_percent_quad(51) == 3
+  assert get_percent_quad(66) == 3
+  assert get_percent_quad(100) == 4
+
+test_get_percent_quad()
+
 def get_dist_from_origin_in_float(X, Y):
   return math.sqrt( (X - ORIGIN)**2 + (Y - ORIGIN)**2 )
 
@@ -28,7 +49,7 @@ def get_point_color(percent, X, Y):
   
     else:
       coord_quad = get_coord_quad(X, Y)
-      angle_quad = percent / 25
+      angle_quad = get_percent_quad(percent)
       if coord_quad < angle_quad:
         return FILL_BLACK
       elif coord_quad > angle_quad:
@@ -37,10 +58,17 @@ def get_point_color(percent, X, Y):
         return FILL_BLACK
       else:
         deg_angle = percent % 25 * 3.6
-        rad_angle = math.radians(degree)
-        if angle_quad == 1:
-          x = RADIUS * math.sin(rad_angle)
-          y = RADIUS * math.cos(rad_angle)
+        rad_angle = math.radians(deg_angle)
+        if angle_quad in [1, 3]:
+          x_d = RADIUS * math.sin(rad_angle)
+          y_d = RADIUS * math.cos(rad_angle)
+          if angle_quad == 3:
+            x_d, y_d = -x_d, -y_d
+        if angle_quad in [2, 4]:
+          x_d = RADIUS * math.cos(rad_angle)
+          y_d = RADIUS * math.sin(rad_angle)
+          if angle_quad == 4:
+            pass
   else:
     return FILL_WHITE
       
@@ -62,4 +90,5 @@ def test_get_point_color():
   assert(get_point_color(87, 20, 40) == FILL_BLACK)
   
 test_get_point_color()
+
 
