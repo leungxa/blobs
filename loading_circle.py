@@ -40,33 +40,62 @@ def get_dist_from_origin_in_float(X, Y):
 
 print get_percent_quad(25)
 
-def get_circle_coord(percent):
-  angle_quad = get_percent_quad(percent)
-  deg_angle = percent % 25 * 3.6
-  rad_angle = math.radians(deg_angle)
+# def get_circle_coord(percent):
+#   angle_quad = get_percent_quad(percent)
+#   deg_angle = percent % 25 * 3.6
+#   rad_angle = math.radians(deg_angle)
   
-  x_d = RADIUS * math.sin(rad_angle)
-  y_d = RADIUS * math.cos(rad_angle)
+#   x_d = RADIUS * math.sin(rad_angle)
+#   y_d = RADIUS * math.cos(rad_angle)
 
+#   if angle_quad == 2:
+#     x_d, y_d = y_d, x_d
+#   if angle_quad == 3:
+#     x_d, y_d = -x_d, -y_d
+#   if angle_quad == 4:
+#     x_d, y_d = -y_d, x_d
+    
+#   x_coord = ORIGIN + x_d
+#   y_coord = ORIGIN + y_d
+#   return (int(x_coord), int(y_coord))
+  
+# def test_get_circle_coord():
+#   assert(get_circle_coord(0) == (50, 100))
+#   assert(get_circle_coord(10) == (79, 90))
+#   assert(get_circle_coord(25) == (100, 50))
+#   assert(get_circle_coord(60) == (20, 9))
+#   assert(get_circle_coord(99) == (46, 99))
+
+# test_get_circle_coord()
+
+def percent_to_degrees(percent):
+  return float(percent) / 100 * 360
+
+def coord_to_angle(X, Y):
+  x_d = X - ORIGIN
+  y_d = Y - ORIGIN
+  
+  d = get_dist_from_origin_in_float(X, Y)
+  
+  angle_quad = get_coord_quad(X, Y)
   if angle_quad == 2:
     x_d, y_d = y_d, x_d
   if angle_quad == 3:
     x_d, y_d = -x_d, -y_d
   if angle_quad == 4:
     x_d, y_d = -y_d, x_d
-    
-  x_coord = ORIGIN + x_d
-  y_coord = ORIGIN + y_d
-  return (int(x_coord), int(y_coord))
   
-def test_get_circle_coord():
-  assert(get_circle_coord(0) == (50, 100))
-  assert(get_circle_coord(10) == (79, 90))
-  assert(get_circle_coord(25) == (100, 50))
-  assert(get_circle_coord(60) == (20, 9))
-  assert(get_circle_coord(99) == (46, 99))
+  deg_angle = math.degrees(math.asin(float(x_d) / d))
+  total = math.fabs(deg_angle) + (angle_quad - 1) * 90
+  return total
 
-test_get_circle_coord()
+def test_coord_to_angle():
+  assert(int(round(coord_to_angle(55, 55))) == 45)
+  assert(int(round(coord_to_angle(20, 30))) == 236)
+  assert(int(round(coord_to_angle(40, 70))) == 333)
+  
+test_coord_to_angle()  
+
 
 def get_point_color(percent, X, Y):
   if percent == 0:
@@ -89,9 +118,10 @@ def get_point_color(percent, X, Y):
       elif percent % 25 == 0 and coord_quad == angle_quad:
         return FILL_BLACK
       else:
-        # get_circle_coord(percent)
-        pass
-        #print percent, x_coord, y_coord
+        percent_angle = percent_to_degrees(percent)
+        coord_angle = coord_to_angle(X, Y)
+        filled = percent_angle > coord_angle
+        return FILL_BLACK if filled else FILL_WHITE
   else:
     return FILL_WHITE
       
